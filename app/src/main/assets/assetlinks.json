@@ -1,0 +1,17 @@
+[{
+  "relation": ["delegate_permission/common.get_login_creds"],
+  "target": {
+    "namespace": "web",
+    "site": "http://julio.dev"
+  }
+},
+  {
+    "relation": ["delegate_permission/common.get_login_creds"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.example.mycredentialmanager",
+      "sha256_cert_fingerprints": [
+        "7E:53:79:A7:4D:8C:E9:FB:9A:E1:19:2F:36:11:2B:41:C7:A4:35:08:FD:86:BA:89:4C:50:2B:E4:27:8C:D9:D6"
+      ]
+    }
+  }]
