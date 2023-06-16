@@ -16,35 +16,30 @@ import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PasswordCredential
 import androidx.credentials.PublicKeyCredential
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.lifecycle.ViewModelProvider
+import com.example.mycredentialmanager.ui.screens.LoginScreen
 
 class MainActivity : ComponentActivity() {
+    private lateinit var myViewModel: LoginViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
+        myViewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                MyApp(this)
+                MyApp(this, myViewModel)
             }
         }
     }
 }
 
 @Composable
-fun MyApp(activity: ComponentActivity) {
+fun MyApp(activity: ComponentActivity, viewModel: LoginViewModel) {
     var passkeyResult by remember { mutableStateOf("") }
 
-    Column {
-        Text(text = passkeyResult)
-        Button(onClick = { passkeyResult = "done" }) {
-            Text(text = "Sign In")
-        }
-
-
-
-        LaunchedEffect(key1 = Unit) {
-            signInWithCredentialManager(activity)
-        }
-    }
+    LoginScreen(viewModel = viewModel, activity = activity)
+    LaunchedEffect(key1 = , block = )
 }
+
 
 suspend fun signInWithCredentialManager(activity: ComponentActivity) {
     val credentialManager = CredentialManager.create(/* context */ activity)
