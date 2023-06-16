@@ -1,7 +1,6 @@
 {
-  "challenge": "T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo",
-  "allowCredentials": [],
+  "challenge": "HjBbH__fbLuzy95AGR31yEARA0EMtKlY0NrV5oy3NQw",
   "timeout": 1800000,
-  "userVerification": "required",
-  "rpId": "http://localhost:3000/.well-known/assetlinks.json"
+  "userVerification": "",
+  "rpId": "www.julio.dev"
 }

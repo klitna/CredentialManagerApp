@@ -31,7 +31,7 @@ class SignInViewModel : ViewModel() {
         val credentialManager = CredentialManager.create(/* context */ context)
         val getPasswordOption = GetPasswordOption()
         val getPublicKeyCredentialOption = GetPublicKeyCredentialOption(
-            requestJson = "{\"challenge\":\"T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo\",\"allowCredentials\":[],\"timeout\":1800000,\"userVerification\":\"required\",\"rpId\":\"https://julio.dev\"}",
+            requestJson = "{\"challenge\":\"T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo\",\"allowCredentials\":[],\"timeout\":1800000,\"userVerification\":\"required\",\"rpId\":\"www.julio.dev\"}",
             preferImmediatelyAvailableCredentials = true
         )
         val getCredRequest = GetCredentialRequest(

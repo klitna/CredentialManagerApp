@@ -12,6 +12,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,8 +27,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel, activity: androidx.activity.ComponentActivity) {
-    val username by remember { mutableStateOf("") }
-    val password by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -49,7 +48,7 @@ fun LoginScreen(viewModel: LoginViewModel, activity: androidx.activity.Component
         )
 
         Button(
-            onClick = { viewModel.createPasskeyButtonClicked(activity) },
+            onClick = { viewModel.loginButtonClicked(activity) },
             modifier = Modifier
                 .fillMaxWidth()
                 .size(width = 90.dp, height = 48.dp)

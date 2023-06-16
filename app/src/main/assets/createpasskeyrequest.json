@@ -2,7 +2,7 @@
   "challenge": "nhkQXfE59Jb97VyyNJkvDiXucMEvltduvcrDmGrODHY",
   "rp": {
     "name": "CredMan App Test",
-    "id": "http://localhost:3000/.well-known/assetlinks.json"
+    "id": "www.julio.dev"
 
   },
   "user": {

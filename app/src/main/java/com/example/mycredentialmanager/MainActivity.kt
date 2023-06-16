@@ -3,6 +3,7 @@ package com.example.mycredentialmanager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -17,28 +18,47 @@ import androidx.credentials.PasswordCredential
 import androidx.credentials.PublicKeyCredential
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewModelScope
 import com.example.mycredentialmanager.ui.screens.LoginScreen
+import com.example.mycredentialmanager.ui.screens.LoginSuccessScreen
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private lateinit var myViewModel: LoginViewModel
+    private val loginViewModel: LoginViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
-        myViewModel = ViewModelProvider(this).get(LoginViewModel::class.java)
+        loginViewModel.initViewModel(this)
         super.onCreate(savedInstanceState)
+        /*lifecycleScope.launch {
+            loginViewModel.logInTest(this@MainActivity)
+        }*/
         setContent {
-            MaterialTheme {
-                MyApp(this, myViewModel)
+            MyApp {
+                val isLoggedIn = loginViewModel.isLoggedIn.value
+
+                if (isLoggedIn) {
+                    LoginSuccessScreen(loginViewModel)
+                } else {
+                    LoginScreen(loginViewModel, this)
+                }
             }
         }
     }
 }
 
 @Composable
+fun MyApp(content: @Composable () -> Unit) {
+    MaterialTheme {
+        content()
+    }
+}
+
+/*@Composable
 fun MyApp(activity: ComponentActivity, viewModel: LoginViewModel) {
     var passkeyResult by remember { mutableStateOf("") }
 
     LoginScreen(viewModel = viewModel, activity = activity)
-    LaunchedEffect(key1 = , block = )
-}
+}*/
 
 
 suspend fun signInWithCredentialManager(activity: ComponentActivity) {

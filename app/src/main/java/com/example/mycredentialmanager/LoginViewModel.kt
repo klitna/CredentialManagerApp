@@ -1,6 +1,5 @@
 package com.example.mycredentialmanager
 
-import android.content.Context
 import android.util.Base64
 import android.util.Log
 import android.view.View
@@ -9,13 +8,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
+import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.GetPasswordOption
 import androidx.credentials.GetPublicKeyCredentialOption
-import androidx.credentials.PasswordCredential
-import androidx.credentials.PublicKeyCredential
 import androidx.credentials.exceptions.CreateCredentialException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -24,6 +23,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.security.SecureRandom
+import androidx.lifecycle.viewModelScope
 
 class LoginViewModel : ViewModel() {
     private val _isLoggedIn = mutableStateOf(false)
@@ -32,8 +32,14 @@ class LoginViewModel : ViewModel() {
     private val _username = mutableStateOf("")
     val username: State<String> = _username
 
+    private lateinit var credentialManager: CredentialManager
+
     fun updateUsername(newUsername: String) {
         _username.value = newUsername
+    }
+
+    fun initViewModel(activity: ComponentActivity){
+        credentialManager = androidx.credentials.CredentialManager.create(/* context */ activity)
     }
 
     fun login() {
@@ -44,9 +50,32 @@ class LoginViewModel : ViewModel() {
         _isLoggedIn.value = false
     }
 
+    suspend fun logInTest(activity: ComponentActivity) {
+        val credentialManager = CredentialManager.create(/* context */ activity)
+        val getPasswordOption = GetPasswordOption()
+        val getPublicKeyCredentialOption = GetPublicKeyCredentialOption(
+            requestJson = "{\"challenge\":\"HjBbH__fbLuzy95AGR31yEARA0EMtKlY0NrV5oy3NQw\",\"timeout\":1800000,\"userVerification\":\"\",\"rpId\":\"www.julio.dev\"}",
+            preferImmediatelyAvailableCredentials = true
+        )
+        val getCredRequest = GetCredentialRequest(
+            listOf(getPublicKeyCredentialOption, getPasswordOption)
+        )
+
+        try {
+            val result: GetCredentialResponse = credentialManager.getCredential(
+                request = getCredRequest,
+                activity = activity
+            )
+            handleSignIn(result)
+        } catch (e: GetCredentialException) {
+            handleFailure(e)
+        }
+    }
+
     fun loginButtonClicked(activity: androidx.activity.ComponentActivity) {
-        activity.lifecycleScope.launch {
+        viewModelScope.launch {
             signInWithCredentialManager(activity)
+            //logInTest(activity)
         }
     }
 
@@ -57,8 +86,7 @@ class LoginViewModel : ViewModel() {
     }
 
     private suspend fun signUpWithCredentialManager(activity: androidx.activity.ComponentActivity): CreatePublicKeyCredentialResponse? {
-        val credentialManager = androidx.credentials.CredentialManager.create(/* context */ activity)
-        val request = CreatePublicKeyCredentialRequest(getRequest(activity))
+        val request = CreatePublicKeyCredentialRequest(getRequestLogIn(activity))
         var response: CreatePublicKeyCredentialResponse? = null
         try {
             response = credentialManager.createCredential(
@@ -79,6 +107,10 @@ class LoginViewModel : ViewModel() {
         return response
     }
 
+    private fun getRequestLogIn(activity: ComponentActivity): String {
+        return activity.applicationContext.readFromAsset("passkeyrequest.json")
+    }
+
     private fun getResponse(activity: ComponentActivity): String{
         val requestJson = activity.applicationContext.assets.open("userinfo.json").bufferedReader().use {
             it.readText()
@@ -89,26 +121,25 @@ class LoginViewModel : ViewModel() {
             .replace("<challenge>", generateChallenge()))
     }
 
-    private suspend fun signInWithCredentialManager(activity: androidx.activity.ComponentActivity) {
-        val credentialManager = androidx.credentials.CredentialManager.create(/* context */ activity)
+    private suspend fun signInWithCredentialManager(activity: androidx.activity.ComponentActivity): GetCredentialResponse? {
+        val getPublicKeyCredentialOption =
+            GetPublicKeyCredentialOption(getRequestLogIn(activity), null, true)
         val getPasswordOption = GetPasswordOption()
-        val getPublicKeyCredentialOption = GetPublicKeyCredentialOption(
-            requestJson = "{\"challenge\":\"T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo\",\"allowCredentials\":[],\"timeout\":1800000,\"userVerification\":\"required\",\"rpId\":\"www.julio.dev\"}",
-            preferImmediatelyAvailableCredentials = true
-        )
-        val getCredRequest = GetCredentialRequest(
-            listOf(getPasswordOption, getPublicKeyCredentialOption)
-        )
-
-        try {
-            val result: GetCredentialResponse = credentialManager.getCredential(
-                request = getCredRequest,
-                activity = activity
+        val result = try {
+            credentialManager.getCredential(
+                GetCredentialRequest(
+                    listOf(
+                        getPublicKeyCredentialOption,
+                        getPasswordOption
+                    )
+                ),
+                activity
             )
-            handleSignIn(result)
-        } catch (e: androidx.credentials.exceptions.GetCredentialException) {
-            handleFailure(e)
+        } catch (e: Exception) {
+            Log.e("Login", "error: " + e.message.toString())
+            return null
         }
+        return result
     }
 
     fun handleSignIn(result: GetCredentialResponse) {
