@@ -1,0 +1,26 @@
+{
+  "challenge": "ghcmrWYUqVgLTaHdnzRVfj5BZDABS76z7RGbH8rUfi8",
+  "rp": {
+    "id": "julio.dev",
+    "name": "CredentialsApp"
+  },
+  "pubKeyCredParams": [
+    {
+      "type": "public-key",
+      "alg": -7
+    },
+    {
+      "type": "public-key",
+      "alg": -257
+    }
+  ],
+  "authenticatorSelection": {
+    "authenticatorAttachment": "platform",
+    "residentKey": "required"
+  },
+  "user": {
+    "id": "t8HoaI0pwGpBD0Vl8ISPE_wCAjVarhmKInX_RQtFM5EfU5CkLYtgn-ZE-YTsGgtBYXaYLHZOA1KiXTbs8wTrqw",
+    "name": "testUser",
+    "displayName": "testUser"
+  }
+}
