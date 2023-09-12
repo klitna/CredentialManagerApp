@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -22,6 +23,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.example.mycredentialmanager.ui.screens.LoginScreen
 import com.example.mycredentialmanager.ui.screens.LoginSuccessScreen
+import com.example.mycredentialmanager.ui.screens.PasswordLoginScreen
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -36,10 +38,20 @@ class MainActivity : ComponentActivity() {
             MyApp {
                 val isLoggedIn = loginViewModel.isLoggedIn.value
 
-                if (isLoggedIn) {
-                    LoginSuccessScreen(loginViewModel)
-                } else {
-                    LoginScreen(loginViewModel, this)
+                if(loginViewModel.isSignIn.value) {
+                    if (isLoggedIn) {
+                        AuthenticationSuccessDialog( onDismiss = {  })
+                        loginViewModel.signOut()
+                    } else {
+                        PasswordLoginScreen(viewModel = loginViewModel, activity = this)
+                    }
+                }
+                else{
+                    if (isLoggedIn) {
+                        LoginSuccessScreen(loginViewModel)
+                    } else {
+                        LoginScreen(loginViewModel, this)
+                    }
                 }
             }
         }
@@ -53,59 +65,27 @@ fun MyApp(content: @Composable () -> Unit) {
     }
 }
 
-/*@Composable
-fun MyApp(activity: ComponentActivity, viewModel: LoginViewModel) {
-    var passkeyResult by remember { mutableStateOf("") }
-
-    LoginScreen(viewModel = viewModel, activity = activity)
-}*/
-
-
-suspend fun signInWithCredentialManager(activity: ComponentActivity) {
-    val credentialManager = CredentialManager.create(/* context */ activity)
-    val getPasswordOption = GetPasswordOption()
-    val getPublicKeyCredentialOption = GetPublicKeyCredentialOption(
-        requestJson = "{\"challenge\":\"T1xCsnxM2DNL2KdK5CLa6fMhD7OBqho6syzInk_n-Uo\",\"allowCredentials\":[],\"timeout\":1800000,\"userVerification\":\"required\",\"rpId\":\"https://julio.dev\"}",
-        preferImmediatelyAvailableCredentials = true
+@Composable
+fun AuthenticationSuccessDialog(
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { onDismiss() },
+        title = {
+            Text(text = "Authentication Successful")
+        },
+        text = {
+            Text(text = "You have successfully logged in.")
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onDismiss()
+                }
+            ) {
+                Text(text = "OK")
+            }
+        }
     )
-    val getCredRequest = GetCredentialRequest(
-        listOf(getPasswordOption, getPublicKeyCredentialOption)
-    )
-
-    try {
-        val result: GetCredentialResponse = credentialManager.getCredential(
-            request = getCredRequest,
-            activity = activity
-        )
-        handleSignIn(result)
-    } catch (e: GetCredentialException) {
-        handleFailure(e)
-    }
 }
 
-fun handleSignIn(result: GetCredentialResponse) {
-    val credential = result.credential
-
-    when (credential) {
-        is PublicKeyCredential -> {
-            // Handle public key credential
-            val responseJson = credential.authenticationResponseJson
-            // TODO: Authenticate with server using responseJson
-        }
-        is PasswordCredential -> {
-            // Handle password credential
-            val username = credential.id
-            val password = credential.password
-            // TODO: Authenticate with server using username and password
-        }
-        else -> {
-            // Catch any unrecognized credential type here.
-            // TODO: Handle unrecognized credential type
-        }
-    }
-}
-
-fun handleFailure(e: GetCredentialException) {
-    // Handle credential retrieval failure
-    // TODO: Handle failure case
-}

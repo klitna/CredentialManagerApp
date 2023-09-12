@@ -6,6 +6,8 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.credentials.CreatePasswordRequest
+import androidx.credentials.CreatePasswordResponse
 import androidx.credentials.CreatePublicKeyCredentialRequest
 import androidx.credentials.CreatePublicKeyCredentialResponse
 import androidx.credentials.CredentialManager
@@ -24,13 +26,24 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.security.SecureRandom
 import androidx.lifecycle.viewModelScope
+import com.example.mycredentialmanager.ui.screens.PasswordLoginScreen
 
 class LoginViewModel : ViewModel() {
     private val _isLoggedIn = mutableStateOf(false)
     val isLoggedIn: State<Boolean> = _isLoggedIn
 
+    private val _isSignIn = mutableStateOf(false)
+    val isSignIn: State<Boolean> = _isSignIn
+
+    private val _isLogin = mutableStateOf(false)
+    val isLogin: State<Boolean> = _isLogin
+
     private val _username = mutableStateOf("")
     val username: State<String> = _username
+
+    private val _password = mutableStateOf("")
+    val password: State<String> = _password
+
 
     private lateinit var credentialManager: CredentialManager
 
@@ -38,38 +51,16 @@ class LoginViewModel : ViewModel() {
         _username.value = newUsername
     }
 
+    fun updatePassword(password: String) {
+        _password.value = password
+    }
+
     fun initViewModel(activity: ComponentActivity){
         credentialManager = androidx.credentials.CredentialManager.create(/* context */ activity)
     }
 
-    fun login() {
-        _isLoggedIn.value = true
-    }
-
     fun logout() {
         _isLoggedIn.value = false
-    }
-
-    suspend fun logInTest(activity: ComponentActivity) {
-        val credentialManager = CredentialManager.create(/* context */ activity)
-        val getPasswordOption = GetPasswordOption()
-        val getPublicKeyCredentialOption = GetPublicKeyCredentialOption(
-            requestJson = "{\"challenge\":\"HjBbH__fbLuzy95AGR31yEARA0EMtKlY0NrV5oy3NQw\",\"timeout\":1800000,\"userVerification\":\"\",\"rpId\":\"www.julio.dev\"}",
-            preferImmediatelyAvailableCredentials = true
-        )
-        val getCredRequest = GetCredentialRequest(
-            listOf(getPublicKeyCredentialOption, getPasswordOption)
-        )
-
-        try {
-            val result: GetCredentialResponse = credentialManager.getCredential(
-                request = getCredRequest,
-                activity = activity
-            )
-            handleSignIn(result)
-        } catch (e: GetCredentialException) {
-            handleFailure(e)
-        }
     }
 
     fun loginButtonClicked(activity: androidx.activity.ComponentActivity) {
@@ -79,31 +70,45 @@ class LoginViewModel : ViewModel() {
         }
     }
 
+    fun signIn() {
+        _isLogin.value = false
+        _isSignIn.value = true
+    }
+
+    fun signOut() {
+        _isSignIn.value = false
+    }
+
+    fun passwordLoginButtonClicked(activity: androidx.activity.ComponentActivity, username: String, password: String) {
+
+        viewModelScope.launch {
+            signInWithPassword(activity, username, password)
+            //logInTest(activity)
+        }
+        //_isPassword.value = true
+    }
+
+
+
     fun createPasskeyButtonClicked(activity: androidx.activity.ComponentActivity) {
         activity.lifecycleScope.launch {
             signUpWithCredentialManager(activity)
         }
     }
 
-    private suspend fun signUpWithCredentialManager(activity: androidx.activity.ComponentActivity): CreatePublicKeyCredentialResponse? {
-        val request = CreatePublicKeyCredentialRequest(getRequestLogIn(activity))
+    private suspend fun signUpWithCredentialManager(activity: ComponentActivity): CreatePublicKeyCredentialResponse? {
+        val request = CreatePublicKeyCredentialRequest(getRequestSignUp(activity))
         var response: CreatePublicKeyCredentialResponse? = null
         try {
             response = credentialManager.createCredential(
                 request = request,
                 activity = activity
             ) as CreatePublicKeyCredentialResponse
+            _isLoggedIn.value = true
+            _isLogin.value = false
         } catch (e: CreateCredentialException) {
-            //configureProgress(View.INVISIBLE)
             Log.e("login", "unable to login")
         }
-        return response
-    }
-
-    private fun getRequest(activity: ComponentActivity): String {
-
-        val response = activity.applicationContext.readFromAsset("userinfo")
-
         return response
     }
 
@@ -111,14 +116,8 @@ class LoginViewModel : ViewModel() {
         return activity.applicationContext.readFromAsset("passkeyrequest.json")
     }
 
-    private fun getResponse(activity: ComponentActivity): String{
-        val requestJson = activity.applicationContext.assets.open("userinfo.json").bufferedReader().use {
-            it.readText()
-        }
-        return (requestJson.replace("<userId>", generateId())
-            .replace("<userName>", username.value)
-            .replace("<userDisplayName>", username.value)
-            .replace("<challenge>", generateChallenge()))
+    private fun getRequestSignUp(activity: ComponentActivity): String {
+        return activity.applicationContext.readFromAsset("userinfo.json")
     }
 
     private suspend fun signInWithCredentialManager(activity: androidx.activity.ComponentActivity): GetCredentialResponse? {
@@ -135,15 +134,34 @@ class LoginViewModel : ViewModel() {
                 ),
                 activity
             )
-        } catch (e: Exception) {
+        } catch (e: GetCredentialException) {
             Log.e("Login", "error: " + e.message.toString())
+            handleFailure(e)
             return null
         }
+        handleSignIn(result)
         return result
+    }
+
+    private suspend fun signInWithPassword(activity: androidx.activity.ComponentActivity, username: String, password: String) {
+        createPassword(activity, username, password)
+    }
+
+    private suspend fun createPassword(activity: androidx.activity.ComponentActivity,username: String, password: String) {
+        val request = CreatePasswordRequest(username, password)
+        try {
+            credentialManager.createCredential(request, activity) as CreatePasswordResponse
+            _isLoggedIn.value = true
+            _isLogin.value = true
+        } catch (e: Exception) {
+            Log.e("Auth", "createPassword failed with exception: " + e.message)
+            _isLoggedIn.value = false
+        }
     }
 
     fun handleSignIn(result: GetCredentialResponse) {
         val credential = result.credential
+        _isLogin.value = true
         _isLoggedIn.value = true
     }
 

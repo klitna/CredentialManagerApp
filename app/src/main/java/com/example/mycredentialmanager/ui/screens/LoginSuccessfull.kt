@@ -26,7 +26,7 @@ fun LoginSuccessScreen(viewModel: LoginViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Login Successful!",
+            text = if(!viewModel.isLogin.value) "Sign in Successful!" else "Login successfull",
             style = MaterialTheme.typography.h4,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -35,9 +35,8 @@ fun LoginSuccessScreen(viewModel: LoginViewModel) {
         Button(
             onClick = { viewModel.logout() },
             modifier = Modifier
-                .fillMaxWidth()
-                .size(width = 120.dp, height = 48.dp)
-                .background(color = Color(0xFFFFB74D)) // Pastel orange color
+                .padding(16.dp)
+                .size(width = 150.dp, height = 48.dp) // Pastel orange color
         ) {
             Text(text = "Logout")
         }
